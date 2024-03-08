@@ -1,7 +1,5 @@
 import java.io.*;
-import java.util.HashMap;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Creates the structures and methods necessary to have questions for the discord bot
@@ -10,6 +8,9 @@ public class Questions {
     private HashMap<String, String> questionBank;
     Random picker;
     int numQs;
+    private String question;
+    private String correctAnswer;
+    private List<String> options;
 
     /**
      * Constructs a question bank to be populated with as many trivia questions as we need.
@@ -19,6 +20,70 @@ public class Questions {
         questionBank = new HashMap<String, String>();
         picker = new Random();
         numQs = 0;
+    }
+
+    public static List<Questions> loadQuestionsFromFile(String category) throws IOException {
+        List<Questions> questions = new ArrayList<>();
+        String fileName = "src/main/" + category.toLowerCase().replace(" ", "-") + ".txt";
+        System.out.println("Attempting to load questions from file: " + fileName); // Debug statement
+        try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                System.out.println("Read line: " + line); // Debug statement
+                if (!line.startsWith("#Q")) {
+                    continue; // Skip lines that don't start with #Q
+                }
+                Questions question = new Questions();
+                question.setQuestion(line.substring(3)); // Remove #Q
+
+                // Read options and answer
+                List<String> options = new ArrayList<>();
+                while ((line = br.readLine()) != null && !line.trim().isEmpty()) {
+                    if (line.startsWith("^")) {
+                        // This is the answer line, remove the caret (^) and set it as the correct answer
+                        question.setCorrectAnswer(line.substring(1).trim());
+                    } else {
+                        // This is an option line, add it to the options list
+                        options.add(line.substring(2).trim()); // Remove ^
+                    }
+                }
+
+                // Set options and add question to the list
+                question.setOptions(options);
+                questions.add(question);
+            }
+        }
+        return questions;
+    }
+
+
+
+    public static Questions getRandomQuestion(List<Questions> questionPool) {
+        Random random = new Random();
+        return questionPool.get(random.nextInt(questionPool.size()));
+    }
+    public void setQuestion(String question) {
+        this.question = question;
+    }
+
+    public void setOptions(List<String> options) {
+        this.options = options;
+    }
+
+    public void setCorrectAnswer(String correctAnswer) {
+        this.correctAnswer = correctAnswer;
+    }
+
+    public String getQuestion() {
+        return question;
+    }
+
+    public List<String> getOptions() {
+        return options;
+    }
+
+    public String getCorrectAnswer() {
+        return correctAnswer;
     }
 
     /**
